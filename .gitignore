@@ -1,0 +1,32 @@
+# Build products and development environments
+.pio/
+build/
+dist/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.elf
+*.map
+*.bin
+*.hex
+*.log
+
+# Local credentials and device backups
+.env
+.env.*
+!.env.example
+secrets.h
+secrets.local.h
+config.local.h
+credentials.json
+wifi-config.json
+device-backups/
+*.pem
+*.key
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
