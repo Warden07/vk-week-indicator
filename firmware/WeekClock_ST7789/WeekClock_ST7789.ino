@@ -48,7 +48,7 @@ void portalScreen() {
 void openPortal() {
   if(wifi.getConfigPortalActive()) return;
   portalUsed=true; portalAt=millis();
-  char value[13]; snprintf(value,sizeof(value),"Wc%08X",os_random());
+  char value[13]; snprintf(value,sizeof(value),"Wc%08lX",os_random());
   apPassword=value;
   wifi.startConfigPortal(apName.c_str(),apPassword.c_str());
   Serial.printf("Setup AP: %s\nSetup password: %s\nOpen http://192.168.4.1\n",apName.c_str(),apPassword.c_str());
@@ -86,7 +86,7 @@ void checkUpdate() {
   BearSSL::X509List roots(ROOT_CA);
   BearSSL::WiFiClientSecure tls;
   tls.setTrustAnchors(&roots); tls.setTimeout(5000);
-  tls.setHandshakeTimeout(8);
+
   HTTPClient http; http.setTimeout(5000);
   String base=UPDATE_BASE;
   if(!http.begin(tls,base+"build.txt")) { updateMessage="UPDATE: URL ERROR"; return; }
