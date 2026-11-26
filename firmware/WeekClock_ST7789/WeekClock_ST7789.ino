@@ -82,7 +82,7 @@ void drawClock() {
   }
   clockLine(6,WiFi.status()==WL_CONNECTED?"WIFI CONNECTED":"WIFI OFFLINE",1,ST77XX_CYAN);
   char buf[32];
-  if(valid) strftime(buf,sizeof(buf),"%H:%M",&local); else strcpy(buf,"--:--");
+  if(valid) strftime(buf,sizeof(buf),"%H:%M:%S",&local); else strcpy(buf,"--:--:--");
   clockLine(25,buf,4);
   if(valid) strftime(buf,sizeof(buf),"%d.%m.%Y",&local); else strcpy(buf,"Waiting for NTP");
   clockLine(67,buf,2);
