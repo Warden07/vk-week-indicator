@@ -1,7 +1,7 @@
 #pragma once
 // No Wi-Fi credentials or GitHub access tokens belong in this file.
-constexpr unsigned FW_BUILD = 1;
-constexpr char FW_VERSION[] = "1.0.0";
+constexpr unsigned FW_BUILD = 2;
+constexpr char FW_VERSION[] = "1.0.1";
 constexpr char TIME_ZONE[] = "MSK-3";
 constexpr int TFT_CS = D8; // GPIO15 must stay LOW during boot. See HARDWARE.md.
 constexpr int TFT_DC = D2;

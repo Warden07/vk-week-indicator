@@ -27,12 +27,28 @@ bool lastConnected=false, lastPortal=false;
 unsigned long bootAt=0, portalAt=0, retryAt=0, frameAt=0, updateAt=0;
 volatile bool synchronized=false;
 volatile unsigned long syncAt=0;
-int lastSecond=-1;
+bool clockVisible=false;
+struct CachedRow { int y=-1; String value; int size=0; uint16_t color=0; };
+CachedRow clockRows[10];
+void clockLine(int y,const String& value,int size=2,uint16_t color=ST77XX_WHITE) {
+  CachedRow* row=nullptr;
+  for(auto& item:clockRows) if(item.y==y) { row=&item; break; }
+  if(!row) for(auto& item:clockRows) if(item.y<0) { row=&item; break; }
+  if(row && row->y==y && row->value==value && row->size==size && row->color==color) return;
+  GFXcanvas16 canvas(224,8*size);
+  if(!canvas.getBuffer()) return;
+  canvas.fillScreen(ST77XX_BLACK);
+  canvas.setTextSize(size); canvas.setTextColor(color); canvas.setTextWrap(false);
+  canvas.setCursor(0,0); canvas.print(value);
+  screen.drawRGBBitmap(8,y,canvas.getBuffer(),224,8*size);
+  if(row) { row->y=y; row->value=value; row->size=size; row->color=color; }
+}
 
 void line(int y,const String& value,int size=2,uint16_t color=ST77XX_WHITE) {
   screen.setTextSize(size); screen.setTextColor(color); screen.setCursor(8,y); screen.print(value);
 }
 void portalScreen() {
+  clockVisible=false;
   screen.fillScreen(ST77XX_BLACK);
   line(8,"WIFI SETUP",2,ST77XX_CYAN);
   line(43,"Connect phone to:",1);
@@ -58,27 +74,31 @@ void drawClock() {
   time_t now=time(nullptr); tm local={};
   const bool valid=synchronized && now>1700000000;
   if(valid) localtime_r(&now,&local);
-  if(!firstDraw && valid && local.tm_sec==lastSecond) return;
-  lastSecond=valid?local.tm_sec:-1; firstDraw=false;
-  screen.fillScreen(ST77XX_BLACK);
-  line(6,WiFi.status()==WL_CONNECTED?"WIFI CONNECTED":"WIFI OFFLINE",1,ST77XX_CYAN);
+  firstDraw=false;
+  if(!clockVisible) {
+    screen.fillScreen(ST77XX_BLACK);
+    for(auto& row:clockRows) row.y=-1;
+    clockVisible=true;
+  }
+  clockLine(6,WiFi.status()==WL_CONNECTED?"WIFI CONNECTED":"WIFI OFFLINE",1,ST77XX_CYAN);
   char buf[32];
-  if(valid) strftime(buf,sizeof(buf),"%H:%M:%S",&local); else strcpy(buf,"--:--:--");
-  line(25,buf,4);
+  if(valid) strftime(buf,sizeof(buf),"%H:%M",&local); else strcpy(buf,"--:--");
+  clockLine(25,buf,4);
   if(valid) strftime(buf,sizeof(buf),"%d.%m.%Y",&local); else strcpy(buf,"Waiting for NTP");
-  line(67,buf,2);
+  clockLine(67,buf,2);
   screen.drawFastHLine(8,92,224,ST77XX_BLUE);
   if(valid) {
     Study study=studyWeek(local.tm_year+1900,local.tm_mon+1,local.tm_mday);
-    line(103,study.week<0?"HOLIDAY":"STUDY WEEK",2,ST77XX_CYAN);
-    if(study.week>0) { line(128,String(study.week),6,ST77XX_GREEN); line(181,"Semester "+String(study.semester),1); }
-  } else line(115,"SYNCING TIME",2,ST77XX_YELLOW);
-  line(200,updateMessage,1);
+    clockLine(103,study.week<0?"HOLIDAY":"STUDY WEEK",2,ST77XX_CYAN);
+    clockLine(128,study.week>0?String(study.week):String(""),6,ST77XX_GREEN);
+    clockLine(181,study.week>0?"Semester "+String(study.semester):String(""),1);
+  } else clockLine(103,"SYNCING TIME",2,ST77XX_YELLOW);
+  clockLine(200,updateMessage,1);
   if(valid) {
     unsigned long age=(millis()-syncAt)/1000;
-    line(214,"NTP age: "+String(age/60)+" min",1,age>86400?ST77XX_YELLOW:ST77XX_WHITE);
+    clockLine(214,"NTP age: "+String(age/60)+" min",1,age>86400?ST77XX_YELLOW:ST77XX_WHITE);
   }
-  line(228,String("v")+FW_VERSION+"  USB: type wifi",1);
+  clockLine(228,String("v")+FW_VERSION+"  USB: type wifi",1);
 }
 void checkUpdate() {
   updateTried=true; updateAt=millis(); updateMessage="CHECKING GITHUB";
